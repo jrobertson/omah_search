@@ -2,31 +2,38 @@
 
 # file: omah_search.rb
 
-require "sqlite3"
 require 'dynarex'
+require 'recordx_sqlite'
 
 
 class OmahSearch
 
-  def initialize(db_file='headers.db')
-
-    @db = SQLite3::Database.new db_file
-    @db.results_as_hash = true
+  def initialize(db_file='headers.db', url_base: nil)
+    
+    @rs = RecordxSqlite.new(db_file)
+    @url_base = url_base    
 
   end
 
   def search(keyword)
 
-    r = @db.query( "select date, from_x, to_x, subject from headers " + 
+    @rs.query( "select date, from_x, to_x, subject, filepath from headers " + 
           "where from_x like '%#{keyword}%' " + 
           "or subject like '%#{keyword}%' order by id desc limit 10" )
-
+    
+    a = @rs.all.map do |x| 
+      
+      {
+        date: x.date[/^[^T]+/], from: x.from_x, to: x.to_x, subject: x.subject,
+        url: "[link](%s%s)" % [@url_base, x.filepath]
+      }
+        
+    end
+    
     dx = Dynarex.new
-    a = r.to_a.map {|row| row[0].slice!(/T[^T]+$/); row}
-
     dx.import a
     table = dx.to_table      
-    table.labels = %w(date from to subject )
+    table.labels = %w(date from to subject link)
     table.markdown = true
     table
   end
