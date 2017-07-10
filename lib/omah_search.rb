@@ -8,10 +8,11 @@ require 'recordx_sqlite'
 
 class OmahSearch
 
-  def initialize(db_file='headers.db', url_base: nil)
+  def initialize(db_file='headers.db', url_base: nil, limit: 20)
     
     @rs = RecordxSqlite.new(db_file)
-    @url_base = url_base    
+    @url_base = url_base
+    @limit = limit
 
   end
 
@@ -19,7 +20,8 @@ class OmahSearch
 
     @rs.query( "select date, from_x, to_x, subject, filepath from headers " + 
           "where from_x like '%#{keyword}%' " + 
-          "or subject like '%#{keyword}%' order by id desc limit 10" )
+          "or subject like '%#{keyword}%' order by id desc limit #{@limit}" +
+          " COLLATE NOCASE")
     
     a = @rs.all.map do |x| 
       
