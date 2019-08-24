@@ -39,5 +39,16 @@ class OmahSearch
     table.markdown = true
     table
   end
+  
+  def list_sender(to_x: '', group_by_domain: true)
+    
+    a = @rs.query "select from_x from headers where to_x like \"#{to_x}\"", 
+        heading: false
+    
+    blk = group_by_domain ? ->(x){ x[/@[^$]+$/]} : ->(x){x}
+    a2 =  a.flatten(1).group_by(&blk)
+    a2.sort_by {|key, value| -value.length}.map {|x| [x[0], x[-1].length]}
+    
+  end
 
 end
